@@ -1,6 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// Fix: Use `process.env.API_KEY` to get the API key as per the guidelines.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const cleanImagePrompt = "Clean all the dishes in this image, making them look sparkling clean. Do not change the background, the shape of the dishes, or the table. Only remove the dirt, smudges, and food residue from the dishes to make them look perfectly clean and new.";
 const validationPrompt = `Does this image contain dirty dishes, such as plates, bowls, or cutlery with food residue, stains, or smudges? The image should be a photograph, not a drawing. Answer with only "yes" or "no".`;
