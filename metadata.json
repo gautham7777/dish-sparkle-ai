@@ -1,0 +1,5 @@
+{
+  "name": "Dish Sparkle AI",
+  "description": "Upload a photo of your dirty dishes and watch AI make them sparkle! This app uses the Gemini API to generate a cleaned version of your image.",
+  "requestFramePermissions": []
+}
