@@ -34,6 +34,19 @@ const DownloadIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+const ResetIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0 8.25 8.25 0 0 0 0-11.667l-3.182-3.182m0 0-3.182 3.182m3.182-3.182L6.34 6.34m11.667 11.667-3.182-3.182" />
+    </svg>
+);
+
+const ClearIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+    </svg>
+);
+
+
 // --- New Confetti Component ---
 const Confetti: React.FC = () => {
     const confettiCount = 100;
@@ -87,9 +100,10 @@ const BubblePlaceholder: React.FC = () => (
 interface ImageUploaderProps {
   onFileSelect: (file: File) => void;
   imageUrl: string | null;
+  onClear: () => void;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileSelect, imageUrl }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileSelect, imageUrl, onClear }) => {
     const [isAnimating, setIsAnimating] = useState(false);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
 
@@ -144,7 +158,20 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onFileSelect, imageUrl })
         <div className="w-full h-full aspect-square relative flex items-center justify-center rounded-2xl overflow-hidden bg-white/20">
             <input type="file" id="file-upload" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleFileChange} />
             {imageUrl ? (
-            <ZoomableImage src={imageUrl} alt="Dirty dishes" />
+            <>
+                <ZoomableImage src={imageUrl} alt="Dirty dishes" />
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onClear();
+                    }}
+                    className="absolute top-3 right-3 z-20 p-2 bg-white/50 backdrop-blur-sm rounded-full text-cyan-900 hover:bg-white/75 hover:text-red-500 transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    aria-label="Remove image"
+                >
+                    <ClearIcon className="w-5 h-5" />
+                </button>
+            </>
             ) : (
             <label htmlFor="file-upload" className="flex flex-col items-center justify-center text-center cursor-pointer text-cyan-800/80 hover:text-cyan-900 transition-colors duration-300 transform hover:scale-105 p-4 w-full h-full">
                 <UploadIcon className="w-20 h-20 mb-2" />
@@ -275,11 +302,36 @@ export default function App() {
     link.click();
     document.body.removeChild(link);
   }, [cleanedImageUrl]);
+
+  const handleReset = useCallback(() => {
+    setOriginalImageUrl(null);
+    setCleanedImageUrl(null);
+    setError(null);
+    setIsLoading(false);
+    setShowConfetti(false);
+    setLoadingMessage('');
+  }, []);
   
   const buttonText = useMemo(() => {
     if (isLoading) return "Working...";
     return "Make it Sparkle";
   }, [isLoading]);
+
+  const isDone = cleanedImageUrl && !isLoading;
+
+  const buttonClasses = [
+    'relative overflow-hidden flex items-center justify-center gap-3 w-full max-w-md px-8 py-4 rounded-full text-xl text-white font-bold',
+    'focus:outline-none focus:ring-4',
+    'transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 disabled:scale-100 shadow-xl hover:shadow-2xl',
+    'animate-fade-in shimmer-button',
+    'disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed'
+  ];
+
+  if (isDone) {
+    buttonClasses.push('bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 focus:ring-cyan-300/50');
+  } else {
+    buttonClasses.push('bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 focus:ring-amber-300/50');
+  }
 
   const title = "Dish Sparkle AI";
 
@@ -299,7 +351,7 @@ export default function App() {
 
       <main className="w-full max-w-6xl flex-grow flex flex-col items-center">
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <ImageUploader onFileSelect={handleFileSelect} imageUrl={originalImageUrl} />
+          <ImageUploader onFileSelect={handleFileSelect} imageUrl={originalImageUrl} onClear={handleReset} />
           <ResultDisplay imageUrl={cleanedImageUrl} isLoading={isLoading} loadingMessage={loadingMessage} onDownload={handleDownload} showConfetti={showConfetti} />
         </div>
 
@@ -311,17 +363,17 @@ export default function App() {
         )}
 
         <button
-          onClick={handleCleanClick}
-          disabled={!originalImageUrl || isLoading}
-          className="relative overflow-hidden flex items-center justify-center gap-3 w-full max-w-md px-8 py-4 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full text-xl text-white font-bold
-                     hover:from-amber-500 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
-                     focus:outline-none focus:ring-4 focus:ring-amber-300/50
-                     transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 disabled:scale-100 shadow-xl hover:shadow-2xl
-                     animate-fade-in shimmer-button"
+          onClick={isDone ? handleReset : handleCleanClick}
+          disabled={!isDone && (!originalImageUrl || isLoading)}
+          className={buttonClasses.join(' ')}
            style={{ animationDelay: '0.6s' }}
         >
-          <MagicWandIcon className="w-7 h-7 magic-wand-icon" />
-          {buttonText}
+          {isDone ? (
+                <ResetIcon className="w-7 h-7" />
+            ) : (
+                <MagicWandIcon className="w-7 h-7 magic-wand-icon" />
+            )}
+            {isDone ? "Clean Another Dish" : buttonText}
         </button>
       </main>
     </div>
